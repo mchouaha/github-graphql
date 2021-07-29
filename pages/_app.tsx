@@ -1,21 +1,27 @@
 
+import React, { Fragment, FunctionComponent, useEffect, useState } from "react"
 import '../styles/globals.css'
-import type { AppProps /*, AppContext */ } from 'next/app'
 
-function App({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />
+interface IProps {
+    Component: FunctionComponent
+    pageProps: any
 }
 
-// Only uncomment this method if you have blocking data requirements for
-// every single page in your application. This disables the ability to
-// perform automatic static optimization, causing every page in your app to
-// be server-side rendered.
-//
-// MyApp.getInitialProps = async (appContext: AppContext) => {
-//   // calls page's `getInitialProps` and fills `appProps.pageProps`
-//   const appProps = await App.getInitialProps(appContext);
+export default function App( {Component, pageProps}: IProps) {
+    
+    const ContextProvider: FunctionComponent = ({ children }) => {
 
-//   return { ...appProps }
-// }
+        return (
+            <Fragment>
+                {children}
+            </Fragment>
+        )
+    }
 
-export default App
+    return (
+        <ContextProvider>
+            <Component {...pageProps} />
+        </ContextProvider>
+    )
+}
+

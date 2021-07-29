@@ -1,66 +1,95 @@
 
 import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import React, { Fragment, FunctionComponent } from 'react'
+import CustomTable from '../components/CustomTable'
+import AquaClient from './api/aquaClient'
+import { REPOSITORIES } from './api/graphql/queries/repositories'
+import Image from 'next/image'
+import { Repository, User } from '../interfaces'
+import { GITHUB } from '../public/environment'
+import styled from 'styled-components'
+import CustomSearch from '../components/CustomSearch'
+import { useState } from 'react'
 
-export default function Home() {
+type PageProps = {
+   data: User
+}
+
+const IndexPage: FunctionComponent<PageProps> = ({data}) => {
+
+  const [repositories, setRepositories] = useState<Repository[]>(data.repositories.nodes)
+
+  const handleSearch = (searchTerm: string) => {
+
+    if (searchTerm.length) {  
+      const listRepo = repositories.filter((repository) => { 
+          return repository.name.toLowerCase().includes(searchTerm.toLowerCase())
+      })
+
+      setRepositories(listRepo)
+      
+    } else {
+      setRepositories(data.repositories.nodes)
+    }       
+}
+
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next TypeScript App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <Fragment>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+      <UserInfo>
+        <span>{GITHUB.username}</span>
+        <Thumbnail>
+          <Image
+              alt="avatar"
+              src={data.avatarUrl} 
+              layout="fixed"
+              priority={true}
+              width={50}
+              height={50}/>
+        </Thumbnail>
+      </UserInfo>
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
+      <CustomSearch onChange={handleSearch}/>
+      
+      <br/>
 
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+      <CustomTable data={repositories}/>
 
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
-    </div>
+    </Fragment>
   )
 }
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin: 10px 0px;
+  
+  span {
+    font-size: 18px;
+    font-weight: bold;
+    margin: auto 5px;
+  }
+`
+
+const Thumbnail = styled.div`
+  border-radius: 50%;
+  overflow: hidden;
+`
+
+export async function getStaticProps() {
+ 
+  const aquaClient = new AquaClient()
+  
+  const slotsRequest =  await aquaClient.query({ 
+    query: REPOSITORIES
+  })
+
+  return {
+    props: {
+      data: slotsRequest.data.data.user
+    }
+  }
+}
+
+export default IndexPage
